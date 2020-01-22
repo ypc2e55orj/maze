@@ -1,0 +1,10 @@
+[package]
+name = "maze"
+version = "0.1.0"
+authors = ["ypc2e55orj <43885603+ypc2e55orj@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rand = "0.7.3"

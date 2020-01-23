@@ -142,46 +142,46 @@ impl Maze {
                         println!("up: ({}, {})", y - 2, x);
                         is_wall = map[y - 2][x];
                         y -= 1;
-                        println!("y deinc: ({}, {})", y, x);
+                        println!("y decrement: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                         y -= 1;
-                        println!("y deinc: ({}, {})", y, x);
+                        println!("y decrement: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                     }
                     Direction::Down => {
                         println!("down: ({}, {})", y + 2, x);
                         is_wall = map[y + 2][x];
                         y += 1;
-                        println!("y inc: ({}, {})", y, x);
+                        println!("y increment: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                         y += 1;
-                        println!("y inc: ({}, {})", y, x);
+                        println!("y increment: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                     }
                     Direction::Right => {
                         println!("direction: right, ({}, {})", y, x - 2);
                         is_wall = map[y][x - 2];
                         x -= 1;
-                        println!("x deinc: ({}, {})", y, x);
+                        println!("x decrement: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                         x -= 1;
-                        println!("x inc: ({}, {})", y, x);
+                        println!("x decrement: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                     }
                     Direction::Left => {
                         println!("direction: left, ({}, {})", y, x + 2);
                         is_wall = map[y][x + 2];
                         x += 1;
-                        println!("x inc: ({}, {})", y, x);
+                        println!("x increment: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                         x += 1;
-                        println!("x inc: ({}, {})", y, x);
+                        println!("x increment: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                     }
                 }
 
                 if is_wall {
-                    println!("attach existed wall");
+                    println!("reach existing wall");
                     break;
                 }
             } else {
@@ -191,7 +191,7 @@ impl Maze {
                     x = prev.x;
                     println!("back: ({}, {})", y, x);
                 } else {
-                    println!("can't back, break");
+                    println!("can't go back, break...");
                     break;
                 }
             }

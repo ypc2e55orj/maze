@@ -1,5 +1,6 @@
 extern crate rand;
 
+use std::env;
 use rand::Rng;
 
 type WallCoords = Vec<WallCoord>;
@@ -206,8 +207,8 @@ impl Maze {
         // 無効化されていない偶数の座標がある限りループする.
         while MazeHelper::is_even(&even_map) {
             let (x, y) = (
-                MazeHelper::even_random(height),
                 MazeHelper::even_random(width),
+                MazeHelper::even_random(height),
             );
 
             // 指定された,x,y共に偶数である座標を無効化.
@@ -247,9 +248,14 @@ impl Maze {
 }
 
 fn main() {
+    let args:Vec<String> = env::args().collect();
+
+    let height: usize = args[1].parse::<usize>().unwrap();
+    let width: usize = args[2].parse::<usize>().unwrap();
+
     let maze = Maze {
-        height: 21,
-        width: 21,
+        height: height,
+        width: width,
     };
     println!("{}", Maze::serialize(maze.generate(), "■ ", "  ", "S ", "G "));
 }

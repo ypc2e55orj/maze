@@ -246,8 +246,8 @@ impl Maze {
 
 fn main() {
     let maze = Maze {
-        height: 11,
-        width: 11,
+        height: 33,
+        width: 33,
     };
     println!("{}", Maze::serialize(maze.generate(), "■ ", "  "));
 }

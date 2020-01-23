@@ -3,16 +3,16 @@ extern crate rand;
 use std::env;
 use rand::Rng;
 
-type WallCoords = Vec<WallCoord>;
+type Coords = Vec<Coord>;
 
-struct WallCoord {
+struct Coord {
     y: usize,
     x: usize,
 }
 
-impl WallCoord {
-    fn new(y: usize, x: usize) -> WallCoord {
-        WallCoord { y: y, x: x }
+impl Coord {
+    fn new(y: usize, x: usize) -> Coord {
+        Coord { y: y, x: x }
     }
 }
 
@@ -68,23 +68,23 @@ impl MazeHelper {
         even
     }
 
-    // 与えられたmapに有効な偶数座標(true)が存在するかを確認する.
-    fn is_even(map: &MazeMap) -> bool {
-        let mut even = false;
+    // 与えられたmapにstate(true|false)と等しい座標が存在するかを確認する.
+    fn is_available(map: &MazeMap, state: bool) -> bool {
+        let mut is_available = false;
 
         for (y, y_val) in map.iter().enumerate() {
             for (x, _) in y_val.iter().enumerate() {
-                if map[y][x] == true {
-                    even = true
+                if map[y][x] == state {
+                    is_available = true
                 }
             }
         }
 
-        even
+        is_available
     }
 
     // Wall構造体が入ったベクターを受け取り,拡張中の自分自身かどうかを確認する.
-    fn is_wall_myself(y: usize, x: usize, wall_coords: &WallCoords) -> bool {
+    fn is_wall_myself(y: usize, x: usize, wall_coords: &Coords) -> bool {
         let mut is_wall_myself = false;
 
         for coord in wall_coords {
@@ -103,17 +103,17 @@ struct Maze {
 }
 
 impl Maze {
-    fn set_wall(y: usize, x: usize, map: &mut MazeMap, wall_coords: &mut WallCoords) {
+    fn set_wall(y: usize, x: usize, map: &mut MazeMap, wall_coords: &mut Coords) {
         println!("set: ({}, {})", y, x);
         map[y][x] = true;
 
         if x % 2 == 0 && y % 2 == 0 {
             println!("add: ({}, {})", y, x);
-            wall_coords.push(WallCoord::new(y, x));
+            wall_coords.push(Coord::new(y, x));
         }
     }
 
-    fn extend_wall(_y: usize, _x: usize, map: &mut MazeMap, wall_coords: &mut WallCoords) {
+    fn extend_wall(_y: usize, _x: usize, map: &mut MazeMap, wall_coords: &mut Coords) {
         let mut x = _x;
         let mut y = _y;
 
@@ -202,10 +202,10 @@ impl Maze {
         let width = MazeHelper::check_input(self.width);
         let mut map = MazeHelper::empty_map(height, width, true, false);
         let mut even_map = MazeHelper::empty_map(height, width, false, true);
-        let mut wall_coords: WallCoords = vec![];
+        let mut wall_coords: Coords = vec![];
 
         // 無効化されていない偶数の座標がある限りループする.
-        while MazeHelper::is_even(&even_map) {
+        while MazeHelper::is_available(&even_map, true) {
             let (x, y) = (
                 MazeHelper::even_random(width),
                 MazeHelper::even_random(height),

@@ -103,32 +103,33 @@ struct Maze {
 
 impl Maze {
     fn set_wall(y: usize, x: usize, map: &mut MazeMap, wall_coords: &mut WallCoords) {
+        println!("set: ({}, {})", y, x);
         map[y][x] = true;
 
         if x % 2 == 0 && y % 2 == 0 {
+            println!("add: ({}, {})", y, x);
             wall_coords.push(WallCoord::new(y, x));
         }
     }
 
     fn extend_wall(_y: usize, _x: usize, map: &mut MazeMap, wall_coords: &mut WallCoords) {
-        let mut x = _x;
-        let mut y = _y;
-
         let mut is_wall = false;
 
-        while !is_wall {
+        loop {
+            let mut x = _x;
+            let mut y = _y;
             let mut directions = vec![];
 
-            if !map[y + 1][x] && !MazeHelper::is_wall_myself(y + 2, x, wall_coords) {
+            if !map[y - 1][x] && !MazeHelper::is_wall_myself(y - 2, x, wall_coords) {
                 directions.push(Direction::Up)
             }
-            if !map[y - 1][x] && !MazeHelper::is_wall_myself(y - 2, x, wall_coords) {
+            if !map[y + 1][x] && !MazeHelper::is_wall_myself(y + 2, x, wall_coords) {
                 directions.push(Direction::Down)
             }
-            if !map[y][x + 1] && !MazeHelper::is_wall_myself(y, x + 2, wall_coords) {
+            if !map[y][x - 1] && !MazeHelper::is_wall_myself(y, x - 2, wall_coords) {
                 directions.push(Direction::Right)
             }
-            if !map[y][x - 1] && !MazeHelper::is_wall_myself(y, x - 2, wall_coords) {
+            if !map[y][x - 1] && !MazeHelper::is_wall_myself(y, x + 2, wall_coords) {
                 directions.push(Direction::Left)
             }
 
@@ -138,31 +139,60 @@ impl Maze {
                 let random_index = MazeHelper::random(directions.len());
                 match directions[random_index] {
                     Direction::Up => {
-                        is_wall = map[y + 2][x];
-                        Maze::set_wall(y + 1, x, map, wall_coords);
-                        Maze::set_wall(y + 1, x, map, wall_coords);
+                        println!("up: ({}, {})", y - 2, x);
+                        is_wall = map[y - 2][x];
+                        y -= 1;
+                        println!("y deinc: ({}, {})", y, x);
+                        Maze::set_wall(y, x, map, wall_coords);
+                        y -= 1;
+                        println!("y deinc: ({}, {})", y, x);
+                        Maze::set_wall(y, x, map, wall_coords);
                     }
                     Direction::Down => {
-                        is_wall = map[y - 2][x];
-                        Maze::set_wall(y - 1, x, map, wall_coords);
-                        Maze::set_wall(y - 1, x, map, wall_coords);
+                        println!("down: ({}, {})", y + 2, x);
+                        is_wall = map[y + 2][x];
+                        y += 1;
+                        println!("y inc: ({}, {})", y, x);
+                        Maze::set_wall(y, x, map, wall_coords);
+                        y += 1;
+                        println!("y inc: ({}, {})", y, x);
+                        Maze::set_wall(y, x, map, wall_coords);
                     }
                     Direction::Right => {
-                        is_wall = map[y][x + 2];
-                        Maze::set_wall(y, x + 1, map, wall_coords);
-                        Maze::set_wall(y, x + 1, map, wall_coords);
+                        println!("direction: right, ({}, {})", y, x - 2);
+                        is_wall = map[y][x - 2];
+                        x -= 1;
+                        println!("x deinc: ({}, {})", y, x);
+                        Maze::set_wall(y, x, map, wall_coords);
+                        x -= 1;
+                        println!("x inc: ({}, {})", y, x);
+                        Maze::set_wall(y, x, map, wall_coords);
                     }
                     Direction::Left => {
-                        is_wall = map[y][x - 2];
-                        Maze::set_wall(y, x - 1, map, wall_coords);
-                        Maze::set_wall(y, x - 1, map, wall_coords);
+                        println!("direction: left, ({}, {})", y, x + 2);
+                        is_wall = map[y][x + 2];
+                        x += 1;
+                        println!("x inc: ({}, {})", y, x);
+                        Maze::set_wall(y, x, map, wall_coords);
+                        x += 1;
+                        println!("x inc: ({}, {})", y, x);
+                        Maze::set_wall(y, x, map, wall_coords);
                     }
+                }
+
+                if is_wall {
+                    println!("attach existed wall");
+                    break;
                 }
             } else {
                 if wall_coords.len() > 0 {
                     let prev = wall_coords.pop().unwrap();
                     y = prev.y;
                     x = prev.x;
+                    println!("back: ({}, {})", y, x);
+                } else {
+                    println!("can't back, break");
+                    break;
                 }
             }
         }
@@ -187,6 +217,7 @@ impl Maze {
 
             // 指定座標が道の場合.
             if map[y][x] == false {
+                println!("start: ({}, {})", y, x);
                 wall_coords = vec![];
                 Maze::extend_wall(y, x, &mut map, &mut wall_coords);
             }
@@ -218,5 +249,5 @@ fn main() {
         height: 11,
         width: 11,
     };
-    println!("{}", Maze::serialize(maze.generate(), "#", " "));
+    println!("{}", Maze::serialize(maze.generate(), "■ ", "  "));
 }

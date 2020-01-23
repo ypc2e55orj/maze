@@ -224,15 +224,19 @@ impl Maze {
         map
     }
 
-    fn serialize(map: MazeMap, wall_str: &str, road_str: &str) -> String {
+    fn serialize(map: MazeMap, wall: &str, road: &str, start: &str, goal: &str) -> String {
         let mut map_str = String::from("");
 
         for (y, y_val) in map.iter().enumerate() {
             for (x, _) in y_val.iter().enumerate() {
-                if map[y][x] == true {
-                    map_str.push_str(wall_str);
+                if y == map.len() - 2  && x == y_val.len() - 1 {
+                    map_str.push_str(start);
+                } else if y == 1 && x == 0 {
+                    map_str.push_str(goal);
+                } else if map[y][x] == true {
+                    map_str.push_str(wall);
                 } else {
-                    map_str.push_str(road_str);
+                    map_str.push_str(road);
                 }
             }
             map_str.push_str("\n");
@@ -247,5 +251,5 @@ fn main() {
         height: 21,
         width: 21,
     };
-    println!("{}", Maze::serialize(maze.generate(), "■ ", "  "));
+    println!("{}", Maze::serialize(maze.generate(), "■ ", "  ", "S ", "G "));
 }

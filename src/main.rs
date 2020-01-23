@@ -1,7 +1,7 @@
 extern crate rand;
 
-use std::env;
 use rand::Rng;
+use std::env;
 
 type Coords = Vec<Coord>;
 
@@ -83,17 +83,17 @@ impl MazeHelper {
         is_available
     }
 
-    // Wall構造体が入ったベクターを受け取り,拡張中の自分自身かどうかを確認する.
-    fn is_wall_myself(y: usize, x: usize, wall_coords: &Coords) -> bool {
-        let mut is_wall_myself = false;
+    // Wall構造体が入ったベクターを受け取り,与えられた座標を含むかかどうかを確認する.
+    fn is_coord_included(y: usize, x: usize, wall_coords: &Coords) -> bool {
+        let mut is_coord_included = false;
 
         for coord in wall_coords {
             if coord.y == y && coord.x == x {
-                is_wall_myself = true;
+                is_coord_included = true;
             }
         }
 
-        is_wall_myself
+        is_coord_included
     }
 }
 
@@ -120,16 +120,16 @@ impl Maze {
         loop {
             let mut directions = vec![];
 
-            if !map[y - 1][x] && !MazeHelper::is_wall_myself(y - 2, x, wall_coords) {
+            if !map[y - 1][x] && !MazeHelper::is_coord_included(y - 2, x, wall_coords) {
                 directions.push(Direction::Up)
             }
-            if !map[y + 1][x] && !MazeHelper::is_wall_myself(y + 2, x, wall_coords) {
+            if !map[y + 1][x] && !MazeHelper::is_coord_included(y + 2, x, wall_coords) {
                 directions.push(Direction::Down)
             }
-            if !map[y][x - 1] && !MazeHelper::is_wall_myself(y, x - 2, wall_coords) {
+            if !map[y][x - 1] && !MazeHelper::is_coord_included(y, x - 2, wall_coords) {
                 directions.push(Direction::Right)
             }
-            if !map[y][x - 1] && !MazeHelper::is_wall_myself(y, x + 2, wall_coords) {
+            if !map[y][x - 1] && !MazeHelper::is_coord_included(y, x + 2, wall_coords) {
                 directions.push(Direction::Left)
             }
 
@@ -225,14 +225,14 @@ impl Maze {
         map
     }
 
-    fn serialize(map: MazeMap, wall: &str, road: &str, start: &str, goal: &str) -> String {
+    fn serialize(map: &MazeMap, wall: &str, road: &str, start: &str, goal: &str) -> String {
         let mut map_str = String::from("");
 
         for (y, y_val) in map.iter().enumerate() {
             for (x, _) in y_val.iter().enumerate() {
-                if y == map.len() - 2  && x == y_val.len() - 1 {
+                if y == map.len() - 2 && x == y_val.len() - 2 {
                     map_str.push_str(start);
-                } else if y == 1 && x == 0 {
+                } else if y == 1 && x == 1 {
                     map_str.push_str(goal);
                 } else if map[y][x] == true {
                     map_str.push_str(wall);
@@ -250,11 +250,77 @@ impl Maze {
 struct MazeSolver;
 
 impl MazeSolver {
+    fn solve_dfs(map: &MazeMap) -> Coords {
+        let height = map.len();
+        let width = map[0].len();
+        let start = Coord::new(height - 2, width - 2);
+        let goal = Coord::new(1, 1);
 
+        let mut is_goaled = false;
+
+        // 探索待ちスタック
+        let mut search_coords: Coords = vec![];
+        search_coords.push(start);
+
+        // 移動履歴
+        let mut moves: Coords = vec![];
+
+        // 探索待ちスタックがある かつ ゴールしていない限りループする.
+        while search_coords.len() > 0 && !is_goaled {
+            let target = search_coords.pop().unwrap();
+
+            for direction in vec![
+                Direction::Up,
+                Direction::Down,
+                Direction::Right,
+                Direction::Left,
+            ] {
+                let mut next_target = Coord::new(target.y, target.x);
+
+                match direction {
+                    Direction::Up => next_target.y -= 1,
+                    Direction::Down => next_target.y += 1,
+                    Direction::Right => next_target.x -= 1,
+                    Direction::Left => next_target.x += 1,
+                }
+
+                if next_target.y > 0
+                    && next_target.x > 0
+                    && next_target.y < height
+                    && next_target.x < width
+                {
+                    // falseの場合道, かつ移動履歴にない未探索の場合
+                    if !map[next_target.y][next_target.x]
+                        && MazeHelper::is_coord_included(next_target.y, next_target.x, &moves)
+                    {
+                        // 所有権対策, usizeはプリミティブ型なので完全コピーされる.
+                        moves.push(Coord::new(target.y, target.x));
+                        moves.push(Coord::new(next_target.y, next_target.x));
+
+                        if next_target.y == goal.y && next_target.x == goal.x {
+                            search_coords = vec![];
+                            search_coords.push(next_target);
+                            is_goaled = true;
+                        } else {
+                            search_coords.push(next_target);
+                        }
+                    }
+                }
+            }
+        }
+
+        moves
+    }
+
+    fn coords_to_map(moves: Coords, wall: &str, road: &str, start: &str, goal: &str) {
+        for val in moves {
+            println!("({}, {})", val.y, val.x);
+        }
+    }
 }
 
 fn main() {
-    let args:Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
     let height: usize = args[1].parse::<usize>().unwrap();
     let width: usize = args[2].parse::<usize>().unwrap();
@@ -263,5 +329,10 @@ fn main() {
         height: height,
         width: width,
     };
-    println!("{}", Maze::serialize(maze.generate(), "■ ", "  ", "S ", "G "));
+
+    let maze_map = maze.generate();
+
+    println!("{}", Maze::serialize(&maze_map, "■ ", "  ", "S ", "G "));
+
+    MazeSolver::coords_to_map(MazeSolver::solve_dfs(&maze_map), "■ ", "  ", "S ", "G ")
 }

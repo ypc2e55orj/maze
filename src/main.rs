@@ -113,11 +113,10 @@ impl Maze {
     }
 
     fn extend_wall(_y: usize, _x: usize, map: &mut MazeMap, wall_coords: &mut WallCoords) {
-        let mut is_wall = false;
+        let mut x = _x;
+        let mut y = _y;
 
         loop {
-            let mut x = _x;
-            let mut y = _y;
             let mut directions = vec![];
 
             if !map[y - 1][x] && !MazeHelper::is_wall_myself(y - 2, x, wall_coords) {
@@ -136,7 +135,9 @@ impl Maze {
             if directions.len() > 0 {
                 Maze::set_wall(y, x, map, wall_coords);
 
+                let mut is_wall = false;
                 let random_index = MazeHelper::random(directions.len());
+
                 match directions[random_index] {
                     Direction::Up => {
                         println!("up: ({}, {})", y - 2, x);
@@ -190,9 +191,6 @@ impl Maze {
                     y = prev.y;
                     x = prev.x;
                     println!("back: ({}, {})", y, x);
-                } else {
-                    println!("can't go back, break...");
-                    break;
                 }
             }
         }
@@ -246,8 +244,8 @@ impl Maze {
 
 fn main() {
     let maze = Maze {
-        height: 33,
-        width: 33,
+        height: 21,
+        width: 21,
     };
     println!("{}", Maze::serialize(maze.generate(), "■ ", "  "));
 }

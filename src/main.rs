@@ -312,10 +312,30 @@ impl MazeSolver {
         moves
     }
 
-    fn coords_to_map(moves: Coords, wall: &str, road: &str, start: &str, goal: &str) {
-        for val in moves {
-            println!("({}, {})", val.y, val.x);
+    fn serialize(
+        map: &MazeMap,
+        moves: &Coords,
+        wall: &str,
+        road: &str,
+        start: &str,
+        goal: &str,
+    ) -> String {
+        let height = map.len();
+        let width = map[0].len();
+
+        let mut moves_map = MazeHelper::empty_map(height, width, false, false);
+
+        for y in 0..height {
+            for x in 0..width {
+                for move_val in moves {
+                    if y == move_val.y && x == move_val.x {
+                        moves_map[y][x] = true;
+                    }
+                }
+            }
         }
+
+        Maze::serialize(&moves_map, wall, road, start, goal)
     }
 }
 
@@ -334,5 +354,10 @@ fn main() {
 
     println!("{}", Maze::serialize(&maze_map, "■ ", "  ", "S ", "G "));
 
-    MazeSolver::coords_to_map(MazeSolver::solve_dfs(&maze_map), "■ ", "  ", "S ", "G ")
+    let solve = MazeSolver::solve_dfs(&maze_map);
+
+    println!(
+        "{}",
+        MazeSolver::serialize(&maze_map, &solve, "■ ", "  ", "S ", "G ")
+    );
 }

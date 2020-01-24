@@ -95,20 +95,36 @@ impl MazeHelper {
 
         is_coord_included
     }
+
+    fn search_coord(coord: &Coord, coords: &Coords) -> usize {
+        let mut elment_index: usize = 0;
+
+        for val in coords {
+            if val.y == coord.y && val.x == coord.x {
+                break;
+            } else {
+                elment_index += 1;
+            }
+        }
+
+        elment_index
+    }
 }
 
 struct Maze {
     height: usize,
     width: usize,
+    start: Coord,
+    goal: Coord,
 }
 
 impl Maze {
     fn set_wall(y: usize, x: usize, map: &mut MazeMap, wall_coords: &mut Coords) {
-        println!("set: ({}, {})", y, x);
+        println!("generate: set: ({}, {})", y, x);
         map[y][x] = true;
 
         if x % 2 == 0 && y % 2 == 0 {
-            println!("add: ({}, {})", y, x);
+            println!("generate: add: ({}, {})", y, x);
             wall_coords.push(Coord::new(y, x));
         }
     }
@@ -141,49 +157,49 @@ impl Maze {
 
                 match directions[random_index] {
                     Direction::Up => {
-                        println!("up: ({}, {})", y - 2, x);
+                        println!("generate: up: ({}, {})", y - 2, x);
                         is_wall = map[y - 2][x];
                         y -= 1;
-                        println!("y decrement: ({}, {})", y, x);
+                        println!("generate: y decrement: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                         y -= 1;
-                        println!("y decrement: ({}, {})", y, x);
+                        println!("generate: y decrement: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                     }
                     Direction::Down => {
-                        println!("down: ({}, {})", y + 2, x);
+                        println!("generate: down: ({}, {})", y + 2, x);
                         is_wall = map[y + 2][x];
                         y += 1;
-                        println!("y increment: ({}, {})", y, x);
+                        println!("generate: y increment: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                         y += 1;
-                        println!("y increment: ({}, {})", y, x);
+                        println!("generate: y increment: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                     }
                     Direction::Right => {
-                        println!("direction: right, ({}, {})", y, x - 2);
+                        println!("generate: right: ({}, {})", y, x - 2);
                         is_wall = map[y][x - 2];
                         x -= 1;
-                        println!("x decrement: ({}, {})", y, x);
+                        println!("generate: x decrement: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                         x -= 1;
-                        println!("x decrement: ({}, {})", y, x);
+                        println!("generate: x decrement: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                     }
                     Direction::Left => {
-                        println!("direction: left, ({}, {})", y, x + 2);
+                        println!("generate: left: ({}, {})", y, x + 2);
                         is_wall = map[y][x + 2];
                         x += 1;
-                        println!("x increment: ({}, {})", y, x);
+                        println!("generate: x increment: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                         x += 1;
-                        println!("x increment: ({}, {})", y, x);
+                        println!("generate: x increment: ({}, {})", y, x);
                         Maze::set_wall(y, x, map, wall_coords);
                     }
                 }
 
                 if is_wall {
-                    println!("reach existing wall");
+                    println!("generate: reach existing wall");
                     break;
                 }
             } else {
@@ -191,7 +207,7 @@ impl Maze {
                     let prev = wall_coords.pop().unwrap();
                     y = prev.y;
                     x = prev.x;
-                    println!("back: ({}, {})", y, x);
+                    println!("generate: back: ({}, {})", y, x);
                 }
             }
         }
@@ -216,7 +232,7 @@ impl Maze {
 
             // 指定座標が道の場合.
             if map[y][x] == false {
-                println!("start: ({}, {})", y, x);
+                println!("generate: start: ({}, {})", y, x);
                 wall_coords = vec![];
                 Maze::extend_wall(y, x, &mut map, &mut wall_coords);
             }
@@ -225,16 +241,19 @@ impl Maze {
         map
     }
 
-    fn serialize(map: &MazeMap, wall: &str, road: &str, start: &str, goal: &str) -> String {
+    fn serialize(&self, map: &MazeMap, wall: &str, road: &str, start: &str, goal: &str) -> String {
+        let height = self.height;
+        let width = self.width;
+
         let mut map_str = String::from("");
 
-        for (y, y_val) in map.iter().enumerate() {
-            for (x, _) in y_val.iter().enumerate() {
-                if y == map.len() - 2 && x == y_val.len() - 2 {
+        for y in 0..height {
+            for x in 0..width {
+                if y == self.start.y && x == self.start.x {
                     map_str.push_str(start);
-                } else if y == 1 && x == 1 {
+                } else if y == self.goal.y && x == self.goal.x {
                     map_str.push_str(goal);
-                } else if map[y][x] == true {
+                } else if map[y][x] {
                     map_str.push_str(wall);
                 } else {
                     map_str.push_str(road);
@@ -247,12 +266,17 @@ impl Maze {
     }
 }
 
-struct MazeSolver;
+struct MazeSolverDfs {
+    height: usize,
+    width: usize,
+    start: Coord,
+    goal: Coord,
+}
 
-impl MazeSolver {
-    fn solve_dfs(map: &MazeMap) -> Coords {
-        let height = map.len();
-        let width = map[0].len();
+impl MazeSolverDfs {
+    fn solve(&self, map: &MazeMap) -> Coords {
+        let height = self.height;
+        let width = self.width;
         let start = Coord::new(height - 2, width - 2);
         let goal = Coord::new(1, 1);
 
@@ -278,10 +302,22 @@ impl MazeSolver {
                 let mut next_target = Coord::new(target.y, target.x);
 
                 match direction {
-                    Direction::Up => next_target.y -= 1,
-                    Direction::Down => next_target.y += 1,
-                    Direction::Right => next_target.x -= 1,
-                    Direction::Left => next_target.x += 1,
+                    Direction::Up => {
+                        next_target.y -= 1;
+                        println!("solve: y decrement: target({}, {})", target.y, target.x);
+                    },
+                    Direction::Down => {
+                        next_target.y += 1;
+                        println!("solve: y increment: target({}, {})", target.y, target.x);
+                    },
+                    Direction::Right => {
+                        next_target.x -= 1;
+                        println!("solve: x decrement: target({}, {})", target.y, target.x);
+                    },
+                    Direction::Left => {
+                        next_target.x += 1;
+                        println!("solve: x increment: target({}, {})", target.y, target.x);
+                    },
                 }
 
                 if next_target.y >= 0
@@ -293,16 +329,21 @@ impl MazeSolver {
                     if !map[next_target.y][next_target.x]
                         && !MazeHelper::is_coord_included(next_target.y, next_target.x, &moves)
                     {
-                        // 所有権対策, usizeはプリミティブ型なので完全コピーされる.
+                        // 逐一Coord::newをしているのは所有権対策, usizeはプリミティブ型なので完全コピーされる.
                         moves.push(Coord::new(target.y, target.x));
+                        println!("solve: add: target({}, {})", target.y, target.x);
                         moves.push(Coord::new(next_target.y, next_target.x));
+                        println!("solve: add: next_target({}, {})", next_target.y, next_target.x);
 
                         if next_target.y == goal.y && next_target.x == goal.x {
                             search_coords = vec![];
-                            search_coords.push(next_target);
+                            search_coords.push(Coord::new(next_target.y, next_target.x));
+                            println!("solve: add: next_target({}, {})", next_target.y, next_target.x);
                             is_goaled = true;
+                            print!("solve: goal");
                         } else {
-                            search_coords.push(next_target);
+                            search_coords.push(Coord::new(next_target.y, next_target.x));
+                            println!("solve: add: next_target({}, {})", next_target.y, next_target.x);
                         }
                     }
                 }
@@ -313,29 +354,49 @@ impl MazeSolver {
     }
 
     fn serialize(
+        &self,
         map: &MazeMap,
         moves: &Coords,
         wall: &str,
         road: &str,
         start: &str,
         goal: &str,
+        ans: &str,
     ) -> String {
         let height = map.len();
         let width = map[0].len();
 
-        let mut moves_map = MazeHelper::empty_map(height, width, false, false);
+        let mut move_map: MazeMap = MazeHelper::empty_map(height, width, false, false);
+        let mut map_str = String::from("");
 
         for y in 0..height {
             for x in 0..width {
                 for move_val in moves {
                     if y == move_val.y && x == move_val.x {
-                        moves_map[y][x] = true;
+                        move_map[y][x] = true;
                     }
                 }
             }
         }
 
-        Maze::serialize(&moves_map, wall, road, start, goal)
+        for y in 0..height {
+            for x in 0..width {
+                if y == self.start.y && x == self.start.x {
+                    map_str.push_str(start);
+                } else if y == self.goal.y && x == self.goal.x {
+                    map_str.push_str(goal);
+                } else if map[y][x] {
+                    map_str.push_str(wall);
+                } else if move_map[y][x] {
+                    map_str.push_str(ans);
+                } else if !map[y][x] {
+                    map_str.push_str(road);
+                }
+            }
+            map_str.push_str("\n");
+        }
+
+        map_str
     }
 }
 
@@ -348,16 +409,25 @@ fn main() {
     let maze = Maze {
         height: height,
         width: width,
+        start: Coord::new(height - 2, width - 2),
+        goal: Coord::new(1, 1),
     };
 
     let maze_map = maze.generate();
 
-    println!("{}", Maze::serialize(&maze_map, "■ ", "  ", "S ", "G "));
+    println!("{}", maze.serialize(&maze_map, "■ ", "  ", "S ", "G "));
 
-    let solve = MazeSolver::solve_dfs(&maze_map);
+    let dfs_solver = MazeSolverDfs {
+        height: height,
+        width: width,
+        start: Coord::new(height - 2, width - 2),
+        goal: Coord::new(1, 1),
+    };
+
+    let dfs_solve = dfs_solver.solve(&maze_map);
 
     println!(
         "{}",
-        MazeSolver::serialize(&maze_map, &solve, "■ ", "  ", "S ", "G ")
+        dfs_solver.serialize(&maze_map, &dfs_solve, "■ ", "  ", "S ", "G ", ". ")
     );
 }

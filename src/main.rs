@@ -320,8 +320,9 @@ impl MazeSolverDfs {
                     },
                 }
 
-                if next_target.y >= 0
-                    && next_target.x >= 0
+                // ここでのnext_target.* + 1 > 0は>= 0とほぼ同義
+                if next_target.y + 1 > 0
+                    && next_target.x + 1 > 0
                     && next_target.y < height
                     && next_target.x < width
                 {

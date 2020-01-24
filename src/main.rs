@@ -269,8 +269,6 @@ impl MazeSolver {
         while search_coords.len() > 0 && !is_goaled {
             let target = search_coords.pop().unwrap();
 
-            println!("solver while");
-
             for direction in vec![
                 Direction::Up,
                 Direction::Down,
@@ -278,8 +276,6 @@ impl MazeSolver {
                 Direction::Left,
             ] {
                 let mut next_target = Coord::new(target.y, target.x);
-
-                println!("direction");
 
                 match direction {
                     Direction::Up => next_target.y -= 1,
@@ -295,7 +291,7 @@ impl MazeSolver {
                 {
                     // falseの場合道, かつ移動履歴にない未探索の場合
                     if !map[next_target.y][next_target.x]
-                        && MazeHelper::is_coord_included(next_target.y, next_target.x, &moves)
+                        && !MazeHelper::is_coord_included(next_target.y, next_target.x, &moves)
                     {
                         // 所有権対策, usizeはプリミティブ型なので完全コピーされる.
                         moves.push(Coord::new(target.y, target.x));

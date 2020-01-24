@@ -269,6 +269,8 @@ impl MazeSolver {
         while search_coords.len() > 0 && !is_goaled {
             let target = search_coords.pop().unwrap();
 
+            println!("solver while");
+
             for direction in vec![
                 Direction::Up,
                 Direction::Down,
@@ -277,6 +279,8 @@ impl MazeSolver {
             ] {
                 let mut next_target = Coord::new(target.y, target.x);
 
+                println!("direction");
+
                 match direction {
                     Direction::Up => next_target.y -= 1,
                     Direction::Down => next_target.y += 1,
@@ -284,8 +288,8 @@ impl MazeSolver {
                     Direction::Left => next_target.x += 1,
                 }
 
-                if next_target.y > 0
-                    && next_target.x > 0
+                if next_target.y >= 0
+                    && next_target.x >= 0
                     && next_target.y < height
                     && next_target.x < width
                 {

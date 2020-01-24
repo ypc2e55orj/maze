@@ -68,6 +68,10 @@ impl MazeHelper {
         even
     }
 
+    fn odd_random(max:usize) -> usize {
+        MazeHelper::even_random(max - 1) + 1
+    }
+
     // 与えられたmapにstate(true|false)と等しい座標が存在するかを確認する.
     fn is_available(map: &MazeMap, state: bool) -> bool {
         let mut is_available = false;
@@ -96,7 +100,7 @@ impl MazeHelper {
         is_coord_included
     }
 
-    fn search_coord(coord: &Coord, coords: &Coords) -> usize {
+    fn search_coord_index(coord: &Coord, coords: &Coords) -> usize {
         let mut elment_index: usize = 0;
 
         for val in coords {
@@ -108,6 +112,15 @@ impl MazeHelper {
         }
 
         elment_index
+    }
+
+    // 座標を一つの数字で表せる形にする. 何らかの定数*coord.y+coord.x
+    fn encode_coord(cons: usize, coord: &Coord) -> usize {
+        cons * coord.y + coord.x
+    }
+
+    fn decode_coord(cons: usize, enced_coord: usize) -> Coord {
+        Coord::new(enced_coord % cons, enced_coord / cons)
     }
 }
 
@@ -332,20 +345,23 @@ impl MazeSolverDfs {
                     {
                         // 逐一Coord::newをしているのは所有権対策, usizeはプリミティブ型なので完全コピーされる.
                         moves.push(Coord::new(target.y, target.x));
-                        println!("solve: add: target({}, {})", target.y, target.x);
-                        moves.push(Coord::new(next_target.y, next_target.x));
-                        println!("solve: add: next_target({}, {})", next_target.y, next_target.x);
+                        println!("solve: add: moves: target({}, {})", target.y, target.x);
 
-                        if next_target.y == goal.y && next_target.x == goal.x {
+                        moves.push(Coord::new(next_target.y, next_target.x));
+                        println!("solve: add: moves: next_target({}, {})", next_target.y, next_target.x);
+
+                        search_coords.push(Coord::new(next_target.y, next_target.x));
+                        println!("solve: add: explored: next_target({}, {})", next_target.y, next_target.x);
+
+                        if goal.y == self.height && goal.x == self.width {
                             search_coords = vec![];
                             search_coords.push(Coord::new(next_target.y, next_target.x));
-                            println!("solve: add: next_target({}, {})", next_target.y, next_target.x);
+                            println!("solve: add: explored: next_target({}, {})", next_target.y, next_target.x);
+
                             is_goaled = true;
-                            print!("solve: goal");
-                        } else {
-                            search_coords.push(Coord::new(next_target.y, next_target.x));
-                            println!("solve: add: next_target({}, {})", next_target.y, next_target.x);
+                            println!("solve: goal");
                         }
+
                     }
                 }
             }
@@ -382,7 +398,13 @@ impl MazeSolverDfs {
 
         for y in 0..height {
             for x in 0..width {
-                if y == self.start.y && x == self.start.x {
+                if y == 0 && x == 0 {
+                    map_str.push_str("O ");
+                } else if y == self.height - 1 && x == 0 {
+                    map_str.push_str("H ");
+                } else if y == 0 && x == self.width - 1 {
+                    map_str.push_str("X ");
+                } else if y == self.start.y && x == self.start.x {
                     map_str.push_str(start);
                 } else if y == self.goal.y && x == self.goal.x {
                     map_str.push_str(goal);

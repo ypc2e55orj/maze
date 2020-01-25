@@ -27,7 +27,6 @@ type MazeMap = Vec<Vec<bool>>;
 
 struct MazeHelper;
 
-
 struct Maze {
     height: usize,
     width: usize,
@@ -45,7 +44,11 @@ struct CoordWithPrev {
 
 impl CoordWithPrev {
     fn new(y: usize, x: usize, prev_y: usize, prev_x: usize) -> CoordWithPrev {
-        CoordWithPrev { y: y, x: x, prev: Coord::new(prev_y, prev_x)}
+        CoordWithPrev {
+            y: y,
+            x: x,
+            prev: Coord::new(prev_y, prev_x),
+        }
     }
 }
 
@@ -125,7 +128,7 @@ impl MazeHelper {
         is_coord_included
     }
 
-    fn is_coord_with_prev_included(y: usize, x:usize, wall_coords: &CoordsWithPrev) -> bool {
+    fn is_coord_with_prev_included(y: usize, x: usize, wall_coords: &CoordsWithPrev) -> bool {
         let mut is_coord_with_prev_included = false;
 
         for coord in wall_coords {
@@ -137,7 +140,7 @@ impl MazeHelper {
         is_coord_with_prev_included
     }
 
-    fn search_coord_index(coord: &Coord , coords: &CoordsWithPrev) -> usize {
+    fn search_coord_index(coord: &Coord, coords: &CoordsWithPrev) -> usize {
         let mut elment_index: usize = 0;
 
         for val in coords {
@@ -332,19 +335,19 @@ impl MazeSolverDfs {
                     Direction::Up => {
                         next_target.y -= 1;
                         println!("solve: y decrement: target({}, {})", target.y, target.x);
-                    },
+                    }
                     Direction::Down => {
                         next_target.y += 1;
                         println!("solve: y increment: target({}, {})", target.y, target.x);
-                    },
+                    }
                     Direction::Right => {
                         next_target.x -= 1;
                         println!("solve: x decrement: target({}, {})", target.y, target.x);
-                    },
+                    }
                     Direction::Left => {
                         next_target.x += 1;
                         println!("solve: x increment: target({}, {})", target.y, target.x);
-                    },
+                    }
                 }
 
                 // ここでのnext_target.* + 1 > 0は>= 0とほぼ同義
@@ -355,19 +358,37 @@ impl MazeSolverDfs {
                 {
                     // falseの場合道, かつ移動履歴にない未探索の場合
                     if !map[next_target.y][next_target.x]
-                        && !MazeHelper::is_coord_with_prev_included(next_target.y, next_target.x, &moves)
+                        && !MazeHelper::is_coord_with_prev_included(
+                            next_target.y,
+                            next_target.x,
+                            &moves,
+                        )
                     {
                         // 逐一Coord::newをしているのは所有権対策, usizeはプリミティブ型なので完全コピーされる.
-                        moves.push(CoordWithPrev::new(next_target.y, next_target.x, target.y, target.x));
-                        println!("solve: add: moves: ({}, {}), ({}, {})", next_target.y, next_target.x, target.y, target.x);
+                        moves.push(CoordWithPrev::new(
+                            next_target.y,
+                            next_target.x,
+                            target.y,
+                            target.x,
+                        ));
+                        println!(
+                            "solve: add: moves: ({}, {}), ({}, {})",
+                            next_target.y, next_target.x, target.y, target.x
+                        );
 
                         search_coords.push(Coord::new(next_target.y, next_target.x));
-                        println!("solve: add: explored: next_target({}, {})", next_target.y, next_target.x);
+                        println!(
+                            "solve: add: explored: next_target({}, {})",
+                            next_target.y, next_target.x
+                        );
 
                         if goal.y == self.height && goal.x == self.width {
                             search_coords = vec![];
                             search_coords.push(Coord::new(next_target.y, next_target.x));
-                            println!("solve: add: explored: next_target({}, {})", next_target.y, next_target.x);
+                            println!(
+                                "solve: add: explored: next_target({}, {})",
+                                next_target.y, next_target.x
+                            );
 
                             is_goaled = true;
                             println!("solve: goal");
@@ -474,6 +495,14 @@ fn main() {
 
     println!(
         "{}",
-        dfs_solver.serialize(&maze_map, &dfs_solver.ans_route(&dfs_solve), "■ ", "  ", "S ", "G ", ". ")
+        dfs_solver.serialize(
+            &maze_map,
+            &dfs_solver.ans_route(&dfs_solve),
+            "■ ",
+            "  ",
+            "S ",
+            "G ",
+            ". "
+        )
     );
 }

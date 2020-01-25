@@ -372,13 +372,13 @@ impl MazeSolverDfs {
                             target.x,
                         ));
                         println!(
-                            "solve: add: moves: ({}, {}), ({}, {})",
+                            "solve: moves: ({}, {}), ({}, {})",
                             next_target.y, next_target.x, target.y, target.x
                         );
 
                         search_coords.push(Coord::new(next_target.y, next_target.x));
                         println!(
-                            "solve: add: explored: next_target({}, {})",
+                            "solve: explored: ({}, {})",
                             next_target.y, next_target.x
                         );
 
@@ -386,7 +386,7 @@ impl MazeSolverDfs {
                             search_coords = vec![];
                             search_coords.push(Coord::new(next_target.y, next_target.x));
                             println!(
-                                "solve: add: explored: next_target({}, {})",
+                                "solve: explored: ({}, {})",
                                 next_target.y, next_target.x
                             );
 
@@ -404,17 +404,16 @@ impl MazeSolverDfs {
     fn ans_route(&self, coords: &CoordsWithPrev) -> Coords {
         let mut ans_coords: Coords = vec![];
         let mut current_coord: Coord = Coord::new(self.goal.y, self.goal.x);
-        let mut is_start = false;
 
-        while !is_start {
+        loop {
             let index = MazeHelper::search_coord_index(&current_coord, &coords);
-
             current_coord = Coord::new(coords[index].prev.y, coords[index].prev.x);
-            ans_coords.push(Coord::new(coords[index].prev.y, coords[index].prev.x));
 
             if current_coord.y == self.start.y && current_coord.x != self.start.x {
-                is_start = true;
+                break;
             }
+
+            ans_coords.push(Coord::new(coords[index].prev.y, coords[index].prev.x));
         }
 
         ans_coords
@@ -488,8 +487,6 @@ fn main() {
 
     let maze_map = maze.generate();
 
-    println!("{}", maze.serialize(&maze_map, "■ ", "  ", "S ", "G "));
-
     let dfs_solver = MazeSolverDfs {
         height: height,
         width: width,
@@ -497,18 +494,12 @@ fn main() {
         goal: Coord::new(1, 1),
     };
 
-    let dfs_solve = dfs_solver.solve(&maze_map);
+    let dfs_solve = dfs_solver.ans_route(&dfs_solver.solve(&maze_map));
+
+    println!("{}", maze.serialize(&maze_map, "■ ", "  ", "S ", "G "));
 
     println!(
         "{}",
-        dfs_solver.serialize(
-            &maze_map,
-            &dfs_solver.ans_route(&dfs_solve),
-            "■ ",
-            "  ",
-            "S ",
-            "G ",
-            ". "
-        )
+        dfs_solver.serialize(&maze_map, &dfs_solve, "■ ", "  ", "S ", "G ", ". ")
     );
 }

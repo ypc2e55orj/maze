@@ -351,9 +351,7 @@ impl MazeSolverDfs {
         while current_index > 0 {
             let current_coord = MazeHelper::decode_encoded_coord(current_index, self.width);
 
-            if (current_coord.y == self.start.y && current_coord.x != self.start.x)
-                || (current_coord.y == 0 && current_coord.x == 0)
-            {
+            if current_coord.y == self.start.y && current_coord.x == self.start.x {
                 break;
             }
 
@@ -361,6 +359,7 @@ impl MazeSolverDfs {
             println!("ans_route: ({}, {})", current_coord.y, current_coord.x);
 
             current_index = moves[current_index];
+            println!("ans_route2: ({}, {})",  current_coord.y, current_coord.x);
         }
 
         ans_coords

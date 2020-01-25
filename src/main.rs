@@ -27,38 +27,6 @@ type MazeMap = Vec<Vec<bool>>;
 
 struct MazeHelper;
 
-struct Maze {
-    height: usize,
-    width: usize,
-    start: Coord,
-    goal: Coord,
-}
-
-type CoordsWithPrev = Vec<CoordWithPrev>;
-
-struct CoordWithPrev {
-    y: usize,
-    x: usize,
-    prev: Coord,
-}
-
-impl CoordWithPrev {
-    fn new(y: usize, x: usize, prev_y: usize, prev_x: usize) -> CoordWithPrev {
-        CoordWithPrev {
-            y: y,
-            x: x,
-            prev: Coord::new(prev_y, prev_x),
-        }
-    }
-}
-
-struct MazeSolverDfs {
-    height: usize,
-    width: usize,
-    start: Coord,
-    goal: Coord,
-}
-
 impl MazeHelper {
     fn empty_map(height: usize, width: usize, edge_fill: bool, even_pillar: bool) -> MazeMap {
         let mut map = vec![vec![false; width]; height];
@@ -128,31 +96,20 @@ impl MazeHelper {
         is_coord_included
     }
 
-    fn is_coord_with_prev_included(y: usize, x: usize, wall_coords: &CoordsWithPrev) -> bool {
-        let mut is_coord_with_prev_included = false;
-
-        for coord in wall_coords {
-            if coord.y == y && coord.x == x {
-                is_coord_with_prev_included = true;
-            }
-        }
-
-        is_coord_with_prev_included
+    fn encode_coord(coord: &Coord, constant: usize) -> usize {
+        constant * coord.y + coord.x
     }
 
-    fn search_coord_index(coord: &Coord, coords: &CoordsWithPrev) -> usize {
-        let mut elment_index: usize = 0;
-
-        for val in coords {
-            if val.y == coord.y && val.x == coord.x {
-                break;
-            } else {
-                elment_index += 1;
-            }
-        }
-
-        elment_index
+    fn decode_encoded_coord(encode_coord: usize, constant: usize) -> Coord {
+        Coord::new(encode_coord / constant, encode_coord % constant)
     }
+}
+
+struct Maze {
+    height: usize,
+    width: usize,
+    start: Coord,
+    goal: Coord,
 }
 
 impl Maze {
@@ -303,8 +260,15 @@ impl Maze {
     }
 }
 
+struct MazeSolverDfs {
+    height: usize,
+    width: usize,
+    start: Coord,
+    goal: Coord,
+}
+
 impl MazeSolverDfs {
-    fn solve(&self, map: &MazeMap) -> CoordsWithPrev {
+    fn solve(&self, map: &MazeMap) -> Vec<usize> {
         let height = self.height;
         let width = self.width;
         let start = Coord::new(height - 2, width - 2);
@@ -317,7 +281,8 @@ impl MazeSolverDfs {
         search_coords.push(start);
 
         // 移動履歴
-        let mut moves: CoordsWithPrev = vec![];
+        let mut moves_encoded: Vec<usize> = vec![0; height * width];
+        let mut moves_coords: Coords = vec![];
 
         // 探索待ちスタックがある かつ ゴールしていない限りループする.
         while search_coords.len() > 0 && !is_goaled {
@@ -350,7 +315,7 @@ impl MazeSolverDfs {
                     }
                 }
 
-                // ここでのnext_target.* + 1 > 0は>= 0とほぼ同義
+                // ここでのnext_target.* 1 > 0は>= 0とほぼ同義
                 if next_target.y + 1 > 0
                     && next_target.x + 1 > 0
                     && next_target.y < height
@@ -358,37 +323,33 @@ impl MazeSolverDfs {
                 {
                     // falseの場合道, かつ移動履歴にない未探索の場合
                     if !map[next_target.y][next_target.x]
-                        && !MazeHelper::is_coord_with_prev_included(
+                        && !MazeHelper::is_coord_included(
                             next_target.y,
                             next_target.x,
-                            &moves,
+                            &moves_coords
                         )
                     {
                         // 逐一Coord::newをしているのは所有権対策, usizeはプリミティブ型なので完全コピーされる.
-                        moves.push(CoordWithPrev::new(
+                        moves_coords.push(Coord::new(target.y, target.x));
+                        moves_coords.push(Coord::new(
                             next_target.y,
-                            next_target.x,
-                            target.y,
-                            target.x,
+                            next_target.x
                         ));
+
+                        moves_encoded[MazeHelper::encode_coord(&next_target, self.width)] =
+                            MazeHelper::encode_coord(&target, self.width);
                         println!(
                             "solve: moves: ({}, {}), ({}, {})",
                             next_target.y, next_target.x, target.y, target.x
                         );
 
                         search_coords.push(Coord::new(next_target.y, next_target.x));
-                        println!(
-                            "solve: explored: ({}, {})",
-                            next_target.y, next_target.x
-                        );
+                        println!("solve: explored: ({}, {})", next_target.y, next_target.x);
 
                         if goal.y == self.height && goal.x == self.width {
                             search_coords = vec![];
                             search_coords.push(Coord::new(next_target.y, next_target.x));
-                            println!(
-                                "solve: explored: ({}, {})",
-                                next_target.y, next_target.x
-                            );
+                            println!("solve: explored: ({}, {})", next_target.y, next_target.x);
 
                             is_goaled = true;
                             println!("solve: goal");
@@ -398,22 +359,23 @@ impl MazeSolverDfs {
             }
         }
 
-        moves
+        moves_encoded
     }
 
-    fn ans_route(&self, coords: &CoordsWithPrev) -> Coords {
+    fn ans_route(&self, moves: &Vec<usize>) -> Coords {
         let mut ans_coords: Coords = vec![];
-        let mut current_coord: Coord = Coord::new(self.goal.y, self.goal.x);
+        let mut current_index = MazeHelper::encode_coord(&self.goal, self.width);
 
         loop {
-            let index = MazeHelper::search_coord_index(&current_coord, &coords);
-            current_coord = Coord::new(coords[index].prev.y, coords[index].prev.x);
+            let current_coord = MazeHelper::decode_encoded_coord(current_index, self.width);
 
+            println!("ans_route: ({}, {})", current_coord.y, current_coord.x);
             if current_coord.y == self.start.y && current_coord.x != self.start.x {
                 break;
+            } else {
+                ans_coords.push(current_coord);
+                current_index = moves[current_index];
             }
-
-            ans_coords.push(Coord::new(coords[index].prev.y, coords[index].prev.x));
         }
 
         ans_coords

@@ -274,18 +274,15 @@ impl MazeSolverDfs {
         let start = Coord::new(height - 2, width - 2);
         let goal = Coord::new(1, 1);
 
-        let mut is_goaled = false;
-
         // 探索待ちスタック
         let mut search_coords: Coords = vec![];
         search_coords.push(start);
 
         // 移動履歴
         let mut moves_encoded: Vec<usize> = vec![0; height * width];
-        let mut moves_coords: Coords = vec![];
 
         // 探索待ちスタックがある かつ ゴールしていない限りループする.
-        while search_coords.len() > 0 && !is_goaled {
+        while search_coords.len() > 0 {
             let target = search_coords.pop().unwrap();
 
             for direction in vec![
@@ -323,19 +320,8 @@ impl MazeSolverDfs {
                 {
                     // falseの場合道, かつ移動履歴にない未探索の場合
                     if !map[next_target.y][next_target.x]
-                        && !MazeHelper::is_coord_included(
-                            next_target.y,
-                            next_target.x,
-                            &moves_coords
-                        )
+                        && moves_encoded[MazeHelper::encode_coord(&next_target, self.width)] == 0
                     {
-                        // 逐一Coord::newをしているのは所有権対策, usizeはプリミティブ型なので完全コピーされる.
-                        moves_coords.push(Coord::new(target.y, target.x));
-                        moves_coords.push(Coord::new(
-                            next_target.y,
-                            next_target.x
-                        ));
-
                         moves_encoded[MazeHelper::encode_coord(&next_target, self.width)] =
                             MazeHelper::encode_coord(&target, self.width);
                         println!(
@@ -347,12 +333,8 @@ impl MazeSolverDfs {
                         println!("solve: explored: ({}, {})", next_target.y, next_target.x);
 
                         if goal.y == self.height && goal.x == self.width {
-                            search_coords = vec![];
-                            search_coords.push(Coord::new(next_target.y, next_target.x));
-                            println!("solve: explored: ({}, {})", next_target.y, next_target.x);
-
-                            is_goaled = true;
                             println!("solve: goal");
+                            break;
                         }
                     }
                 }
@@ -366,16 +348,19 @@ impl MazeSolverDfs {
         let mut ans_coords: Coords = vec![];
         let mut current_index = MazeHelper::encode_coord(&self.goal, self.width);
 
-        loop {
+        while current_index > 0 {
             let current_coord = MazeHelper::decode_encoded_coord(current_index, self.width);
 
-            println!("ans_route: ({}, {})", current_coord.y, current_coord.x);
-            if current_coord.y == self.start.y && current_coord.x != self.start.x {
+            if (current_coord.y == self.start.y && current_coord.x != self.start.x)
+                || (current_coord.y == 0 && current_coord.x == 0)
+            {
                 break;
-            } else {
-                ans_coords.push(current_coord);
-                current_index = moves[current_index];
             }
+
+            ans_coords.push(Coord::new(current_coord.y, current_coord.x));
+            println!("ans_route: ({}, {})", current_coord.y, current_coord.x);
+
+            current_index = moves[current_index];
         }
 
         ans_coords

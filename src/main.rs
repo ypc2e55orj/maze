@@ -27,6 +27,35 @@ type MazeMap = Vec<Vec<bool>>;
 
 struct MazeHelper;
 
+
+struct Maze {
+    height: usize,
+    width: usize,
+    start: Coord,
+    goal: Coord,
+}
+
+type CoordsWithPrev = Vec<CoordWithPrev>;
+
+struct CoordWithPrev {
+    y: usize,
+    x: usize,
+    prev: Coord,
+}
+
+impl CoordWithPrev {
+    fn new(y: usize, x: usize, prev_y: usize, prev_x: usize) -> CoordWithPrev {
+        CoordWithPrev { y: y, x: x, prev: Coord::new(prev_y, prev_x)}
+    }
+}
+
+struct MazeSolverDfs {
+    height: usize,
+    width: usize,
+    start: Coord,
+    goal: Coord,
+}
+
 impl MazeHelper {
     fn empty_map(height: usize, width: usize, edge_fill: bool, even_pillar: bool) -> MazeMap {
         let mut map = vec![vec![false; width]; height];
@@ -68,10 +97,6 @@ impl MazeHelper {
         even
     }
 
-    fn odd_random(max:usize) -> usize {
-        MazeHelper::even_random(max - 1) + 1
-    }
-
     // 与えられたmapにstate(true|false)と等しい座標が存在するかを確認する.
     fn is_available(map: &MazeMap, state: bool) -> bool {
         let mut is_available = false;
@@ -100,7 +125,19 @@ impl MazeHelper {
         is_coord_included
     }
 
-    fn search_coord_index(coord: &Coord, coords: &Coords) -> usize {
+    fn is_coord_with_prev_included(y: usize, x:usize, wall_coords: &CoordsWithPrev) -> bool {
+        let mut is_coord_with_prev_included = false;
+
+        for coord in wall_coords {
+            if coord.y == y && coord.x == x {
+                is_coord_with_prev_included = true;
+            }
+        }
+
+        is_coord_with_prev_included
+    }
+
+    fn search_coord_index(coord: &Coord , coords: &CoordsWithPrev) -> usize {
         let mut elment_index: usize = 0;
 
         for val in coords {
@@ -113,22 +150,6 @@ impl MazeHelper {
 
         elment_index
     }
-
-    // 座標を一つの数字で表せる形にする. 何らかの定数*coord.y+coord.x
-    fn encode_coord(cons: usize, coord: &Coord) -> usize {
-        cons * coord.y + coord.x
-    }
-
-    fn decode_coord(cons: usize, enced_coord: usize) -> Coord {
-        Coord::new(enced_coord % cons, enced_coord / cons)
-    }
-}
-
-struct Maze {
-    height: usize,
-    width: usize,
-    start: Coord,
-    goal: Coord,
 }
 
 impl Maze {
@@ -279,15 +300,8 @@ impl Maze {
     }
 }
 
-struct MazeSolverDfs {
-    height: usize,
-    width: usize,
-    start: Coord,
-    goal: Coord,
-}
-
 impl MazeSolverDfs {
-    fn solve(&self, map: &MazeMap) -> Coords {
+    fn solve(&self, map: &MazeMap) -> CoordsWithPrev {
         let height = self.height;
         let width = self.width;
         let start = Coord::new(height - 2, width - 2);
@@ -300,7 +314,7 @@ impl MazeSolverDfs {
         search_coords.push(start);
 
         // 移動履歴
-        let mut moves: Coords = vec![];
+        let mut moves: CoordsWithPrev = vec![];
 
         // 探索待ちスタックがある かつ ゴールしていない限りループする.
         while search_coords.len() > 0 && !is_goaled {
@@ -341,14 +355,11 @@ impl MazeSolverDfs {
                 {
                     // falseの場合道, かつ移動履歴にない未探索の場合
                     if !map[next_target.y][next_target.x]
-                        && !MazeHelper::is_coord_included(next_target.y, next_target.x, &moves)
+                        && !MazeHelper::is_coord_with_prev_included(next_target.y, next_target.x, &moves)
                     {
                         // 逐一Coord::newをしているのは所有権対策, usizeはプリミティブ型なので完全コピーされる.
-                        moves.push(Coord::new(target.y, target.x));
-                        println!("solve: add: moves: target({}, {})", target.y, target.x);
-
-                        moves.push(Coord::new(next_target.y, next_target.x));
-                        println!("solve: add: moves: next_target({}, {})", next_target.y, next_target.x);
+                        moves.push(CoordWithPrev::new(next_target.y, next_target.x, target.y, target.x));
+                        println!("solve: add: moves: ({}, {}), ({}, {})", next_target.y, next_target.x, target.y, target.x);
 
                         search_coords.push(Coord::new(next_target.y, next_target.x));
                         println!("solve: add: explored: next_target({}, {})", next_target.y, next_target.x);
@@ -361,13 +372,25 @@ impl MazeSolverDfs {
                             is_goaled = true;
                             println!("solve: goal");
                         }
-
                     }
                 }
             }
         }
 
         moves
+    }
+
+    fn ans_route(&self, coords: &CoordsWithPrev) -> Coords {
+        let mut ans_coords: Coords = vec![];
+        let mut current_coord: Coord = Coord::new(self.goal.y, self.goal.x);
+
+        while current_coord.y != self.start.y && current_coord.x != self.start.x {
+            let index = MazeHelper::search_coord_index(&current_coord, &coords);
+            current_coord = Coord::new(coords[index].prev.y, coords[index].prev.x);
+            ans_coords.push(Coord::new(coords[index].prev.y, coords[index].prev.x));
+        }
+
+        ans_coords
     }
 
     fn serialize(
@@ -401,7 +424,7 @@ impl MazeSolverDfs {
                 if y == 0 && x == 0 {
                     map_str.push_str("O ");
                 } else if y == self.height - 1 && x == 0 {
-                    map_str.push_str("H ");
+                    map_str.push_str("Y ");
                 } else if y == 0 && x == self.width - 1 {
                     map_str.push_str("X ");
                 } else if y == self.start.y && x == self.start.x {
@@ -451,6 +474,6 @@ fn main() {
 
     println!(
         "{}",
-        dfs_solver.serialize(&maze_map, &dfs_solve, "■ ", "  ", "S ", "G ", ". ")
+        dfs_solver.serialize(&maze_map, &dfs_solver.ans_route(&dfs_solve), "■ ", "  ", "S ", "G ", ". ")
     );
 }

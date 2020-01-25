@@ -114,13 +114,12 @@ struct Maze {
 
 impl Maze {
     fn set_wall(y: usize, x: usize, map: &mut MazeMap, wall_coords: &mut Coords) {
-
-      println!("generate: set: ({}, {})", y, x);
+        println!("generate: set: ({}, {})", y, x);
         map[y][x] = true;
 
         if x % 2 == 0 && y % 2 == 0 {
             println!("generate: add: ({}, {})", y, x);
-          
+
             wall_coords.push(Coord::new(y, x));
         }
     }
@@ -210,8 +209,8 @@ impl Maze {
     }
 
     fn generate(&self) -> MazeMap {
-        let height = MazeHelper::check_input(self.height);
-        let width = MazeHelper::check_input(self.width);
+        let height = self.height;
+        let width = self.width;
         let mut map = MazeHelper::empty_map(height, width, true, false);
         let mut even_map = MazeHelper::empty_map(height, width, false, true);
         let mut wall_coords: Coords = vec![];
@@ -361,7 +360,7 @@ impl MazeSolverDfs {
             println!("ans_route: ({}, {})", current_coord.y, current_coord.x);
 
             current_index = moves[current_index];
-            println!("ans_route2: ({}, {})",  current_coord.y, current_coord.x);
+            println!("ans_route2: ({}, {})", current_coord.y, current_coord.x);
         }
 
         ans_coords
@@ -423,31 +422,47 @@ impl MazeSolverDfs {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let height: usize = args[1].parse::<usize>().unwrap();
-    let width: usize = args[2].parse::<usize>().unwrap();
+    if args.len() == 2 {
+        let _height: usize = args[1].parse::<usize>().unwrap_or(5);
+        let _width: usize = args[2].parse::<usize>().unwrap_or(5);
 
-    let maze = Maze {
-        height: height,
-        width: width,
-        start: Coord::new(height - 2, width - 2),
-        goal: Coord::new(1, 1),
-    };
+        let height: usize = MazeHelper::check_input(_height);
+        let width: usize = MazeHelper::check_input(_width);
 
-    let maze_map = maze.generate();
+        let maze = Maze {
+            height: height,
+            width: width,
+            start: Coord::new(height - 2, width - 2),
+            goal: Coord::new(1, 1),
+        };
 
-    let dfs_solver = MazeSolverDfs {
-        height: height,
-        width: width,
-        start: Coord::new(height - 2, width - 2),
-        goal: Coord::new(1, 1),
-    };
+        let map = maze.generate();
 
-    let dfs_solve = dfs_solver.ans_route(&dfs_solver.solve(&maze_map));
+        let dfs = MazeSolverDfs {
+            height: height,
+            width: width,
+            start: Coord::new(height - 2, width - 2),
+            goal: Coord::new(1, 1),
+        };
 
-    println!("{}", maze.serialize(&maze_map, "\x1b[47m  \x1b[m", "  ", "S ", "G "));
+        let dfs_solve = dfs.ans_route(&dfs.solve(&map));
 
-    println!(
-        "{}",
-        dfs_solver.serialize(&maze_map, &dfs_solve, "\x1b[47m  \x1b[m", "  ", "S ", "G ", "\x1b[41m  \x1b[m")
-    );
+        println!(
+            "{}",
+            maze.serialize(&map, "\x1b[47m  \x1b[m", "  ", "S ", "G ")
+        );
+
+        println!(
+            "{}",
+            dfs.serialize(
+                &map,
+                &dfs_solve,
+                "\x1b[47m  \x1b[m",
+                "  ",
+                "S ",
+                "G ",
+                "\x1b[41m  \x1b[m"
+            )
+        );
+    }
 }

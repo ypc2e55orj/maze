@@ -114,11 +114,13 @@ struct Maze {
 
 impl Maze {
     fn set_wall(y: usize, x: usize, map: &mut MazeMap, wall_coords: &mut Coords) {
-        println!("generate: set: ({}, {})", y, x);
+
+      println!("generate: set: ({}, {})", y, x);
         map[y][x] = true;
 
         if x % 2 == 0 && y % 2 == 0 {
             println!("generate: add: ({}, {})", y, x);
+          
             wall_coords.push(Coord::new(y, x));
         }
     }

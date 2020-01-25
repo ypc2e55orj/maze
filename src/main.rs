@@ -443,10 +443,10 @@ fn main() {
 
     let dfs_solve = dfs_solver.ans_route(&dfs_solver.solve(&maze_map));
 
-    println!("{}", maze.serialize(&maze_map, "■ ", "  ", "S ", "G "));
+    println!("{}", maze.serialize(&maze_map, "\x1b[47m  \x1b[m", "  ", "S ", "G "));
 
     println!(
         "{}",
-        dfs_solver.serialize(&maze_map, &dfs_solve, "■ ", "  ", "S ", "G ", ". ")
+        dfs_solver.serialize(&maze_map, &dfs_solve, "\x1b[47m  \x1b[m", "  ", "S ", "G ", "\x1b[41m  \x1b[m")
     );
 }

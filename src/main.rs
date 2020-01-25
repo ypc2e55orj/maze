@@ -412,7 +412,7 @@ impl MazeSolverDfs {
             current_coord = Coord::new(coords[index].prev.y, coords[index].prev.x);
             ans_coords.push(Coord::new(coords[index].prev.y, coords[index].prev.x));
 
-            if current_coord.y == self.start.y && current_coord.x != self.x {
+            if current_coord.y == self.start.y && current_coord.x != self.start.x {
                 is_start = true;
             }
         }

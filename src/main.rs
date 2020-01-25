@@ -404,9 +404,9 @@ impl MazeSolverDfs {
     fn ans_route(&self, coords: &CoordsWithPrev) -> Coords {
         let mut ans_coords: Coords = vec![];
         let mut current_coord: Coord = Coord::new(self.goal.y, self.goal.x);
-        let mut is_start = true;
+        let mut is_start = false;
 
-        while is_start {
+        while !is_start {
             let index = MazeHelper::search_coord_index(&current_coord, &coords);
 
             current_coord = Coord::new(coords[index].prev.y, coords[index].prev.x);

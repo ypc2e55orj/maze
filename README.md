@@ -1,3 +1,7 @@
-[WIP] 正常に動作しません.
+[WIP] 一応動作します.
 
-[壁伸ばし法 - Algoful](https://algoful.com/Archive/Algorithm/MazeExtend)を採用し,この記事の通りに実装する方針です.
+[壁伸ばし法 - Algoful](https://algoful.com/Archive/Algorithm/MazeExtend)
+
+[深さ優先探索 - Algoful](https://algoful.com/Archive/Algorithm/DFS)
+
+を参考にしました.

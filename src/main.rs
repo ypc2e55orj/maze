@@ -2,6 +2,7 @@ extern crate rand;
 
 use rand::Rng;
 use std::env;
+use std::process;
 
 type Coords = Vec<Coord>;
 
@@ -464,5 +465,8 @@ fn main() {
                 "\x1b[41m  \x1b[m"
             )
         );
+    } else {
+        eprintln!("Usage: <this program> <height> <width>");
+        process::exit(1);
     }
 }

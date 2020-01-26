@@ -450,7 +450,7 @@ fn main() {
 
         println!(
             "{}",
-            maze.serialize(&map, "\x1b[47m  \x1b[m", "  ", "S ", "G ")
+            maze.serialize(&map, "\x1b[42m  \x1b[m", "\x1b[47m  \x1b[m", "\x1b[41mS \x1b[m", "\x1b[46mG \x1b[m")
         );
 
         println!(
@@ -458,11 +458,11 @@ fn main() {
             dfs.serialize(
                 &map,
                 &dfs_solve,
+                "\x1b[42m  \x1b[m",
                 "\x1b[47m  \x1b[m",
-                "  ",
-                "S ",
-                "G ",
-                "\x1b[41m  \x1b[m"
+                "\x1b[41mS \x1b[m",
+                "\x1b[44mG \x1b[m",
+                "\x1b[43m  \x1b[m"
             )
         );
     } else {
